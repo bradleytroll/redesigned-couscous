@@ -3,6 +3,8 @@ const { ApolloServer } = require('apollo-server-express');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const typeDefs = require('./schemas/typeDefs');
+const resolvers = require('./schemas/resolvers');
 
 dotenv.config();
 
@@ -23,19 +25,18 @@ db.once('open', () => {
 
 // Apollo Server setup
 const server = new ApolloServer({
-    // typeDefs,
-    // resolvers,
+    typeDefs,
+    resolvers,
     context: ({ req }) => {
-        // Get the user token from the headers.
         const token = req.headers.authorization || '';
-
-        // Try to retrieve a user with the token
-        const user = jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-            if (err) return null;
-            return decoded;
-        });
-
-        // Add the user to the context
+        let user = null;
+        if (token) {
+            try {
+                user = jwt.verify(token, process.env.JWT_SECRET);
+            } catch (err) {
+                console.log('Invalid token');
+            }
+        }
         return { user };
     },
 });
